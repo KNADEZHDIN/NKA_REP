@@ -1,5 +1,5 @@
 CREATE OR REPLACE NONEDITIONABLE FUNCTION SYS.GET_CURR_NBU(P_VALCODE IN VARCHAR2 DEFAULT 'USD',
-                                                       P_DATE    IN DATE DEFAULT SYSDATE)
+                                                           P_DATE    IN DATE DEFAULT SYSDATE)
   RETURN VARCHAR2 IS
   V_JSON VARCHAR2(1000);
   V_DATE VARCHAR2(15) := TO_CHAR(P_DATE, 'YYYYMMDD');
