@@ -13,4 +13,4 @@ COMMENT ON COLUMN UTIL.SYS_LOG.ID IS 'Первинний ключ таблиці
 COMMENT ON COLUMN UTIL.SYS_LOG.APPL_PROC IS 'Назва процедури програми.';
 COMMENT ON COLUMN UTIL.SYS_LOG.MESSAGE IS 'Повідомлення програми про перебіг/результат процедури.';
 COMMENT ON COLUMN UTIL.SYS_LOG.STATUS IS 'Статус процедури. Значення статусу процедури має бути "OK", "WARNING" або "BAD" ';
-COMMENT ON COLUMN UTIL.SYS_LOG.LOG_DATE IS 'Дата події. Системна дата за замовчуванням. Ненулевий стовпець.';
+COMMENT ON COLUMN UTIL.SYS_LOG.LOG_DATE IS 'Дата події. Системна дата за замовчуванням.';
