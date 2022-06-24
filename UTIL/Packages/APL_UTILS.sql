@@ -103,11 +103,12 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
   END DOWNLOAD_CUR_EXCH_RATE;
 
   -- Процедура для обогащения всех полей таблицы util.cur_exch_rate и util.cur_exch_rate_history из вью util.cur_exch_rate_v (SM-112/SM-113)
- 
- PROCEDURE ACTION_CUR_EXCH_RATE IS
+  PROCEDURE ACTION_CUR_EXCH_RATE IS
   
   BEGIN
-   INSERT INTO UTIL.SYS_LOG
+  
+    -- 1.
+    INSERT INTO UTIL.SYS_LOG
       (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
     VALUES
       ((SELECT NVL(MAX(ID), 0) + 1 FROM UTIL.SYS_LOG),
@@ -115,8 +116,9 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
        'Процедуру ACTION_CUR_EXCH_RATE запущено',
        'WARNING',
        SYSDATE);
+  
     BEGIN
-      -- 2
+      -- 2.
       MERGE INTO UTIL.CUR_EXCH_RATE CR
       USING (SELECT CE.ID,
                     CE.R030,
@@ -135,7 +137,7 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
                CR.RATE      = FN.RATE,
                CR.CURR_CODE = FN.CUR;
     
-      -- 3
+      -- 3.
       FOR CC IN (SELECT CE.CURR_ID,
                         CE.CURR_TEXT,
                         CE.RATE,
@@ -168,16 +170,18 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
     
     EXCEPTION
       WHEN OTHERS THEN
-       INSERT INTO UTIL.SYS_LOG
-            (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
-          VALUES
-            ((SELECT NVL(MAX(ID), 0) + 1 FROM UTIL.SYS_LOG),
-             'ACTION_CUR_EXCH_RATE',
-             'процедуру призупинено ACTION_CUR_EXCH_RATE сталася помилка',
-             'BAD',
-             SYSDATE); -- 4. TODO: если любая ошибка, фиксировать в логи
+        INSERT INTO UTIL.SYS_LOG -- 4.
+          (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
+        VALUES
+          ((SELECT NVL(MAX(ID), 0) + 1 FROM UTIL.SYS_LOG),
+           'ACTION_CUR_EXCH_RATE',
+           'процедуру призупинено ACTION_CUR_EXCH_RATE сталася помилка',
+           'BAD',
+           SYSDATE);
     END;
-  INSERT INTO UTIL.SYS_LOG
+  
+    -- 5.
+    INSERT INTO UTIL.SYS_LOG
       (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
     VALUES
       ((SELECT NVL(MAX(ID), 0) + 1 FROM UTIL.SYS_LOG),
@@ -185,15 +189,18 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
        'Процедуру ACTION_CUR_EXCH_RATE завершено',
        'OK',
        SYSDATE);
-       COMMIT;
-  END ACTION_CUR_EXCH_RATE;
   
+    COMMIT;
+  
+  END ACTION_CUR_EXCH_RATE;
+
   -- Процедура для обогащения всех полей таблицы util.cur_exch_rate и util.cur_exch_rate_history по криптовалюте из Linux сервера (SM-114)
   PROCEDURE LOAD_ACTION_CUR_FROM_FILE IS
   
   BEGIN
-    
-    DBMS_OUTPUT.PUT_LINE('ТЕСТ :-) '||TO_CHAR(SYSDATE,'DD.MM.YYYY HH24:MI:SS'));
+  
+    DBMS_OUTPUT.PUT_LINE('ТЕСТ :-) ' ||
+                         TO_CHAR(SYSDATE, 'DD.MM.YYYY HH24:MI:SS'));
   
   END LOAD_ACTION_CUR_FROM_FILE;
 
