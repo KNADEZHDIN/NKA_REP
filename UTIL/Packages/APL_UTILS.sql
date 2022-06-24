@@ -39,6 +39,20 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
   
   BEGIN
   
+    -- 1.
+    INSERT INTO UTIL.SYS_LOG
+      (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
+    VALUES
+      ((SELECT NVL(MAX(ID), 0) + 1 FROM UTIL.SYS_LOG),
+       'DOWNLOAD_CUR_EXCH_RATE',
+       'Процедуру DOWNLOAD_CUR_EXCH_RATE запущено',
+       'WARNING',
+       SYSDATE);
+  
+    -- 2.
+    DELETE FROM UTIL.CUR_EXCH_RATE
+     WHERE CURR_TYPE IN ('PRE_METAL', 'MONEY');
+  
     -- 3.
     FOR CC IN (SELECT CT.CURR_CODE
                  FROM UTIL.CURR_TYPE CT
@@ -62,10 +76,29 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
       
       EXCEPTION
         WHEN OTHERS THEN
-          NULL; -- 5. TODO: если любая ошибка, фиксировать в логи
+          INSERT INTO UTIL.SYS_LOG -- 5.
+            (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
+          VALUES
+            ((SELECT NVL(MAX(ID), 0) + 1 FROM UTIL.SYS_LOG),
+             'DOWNLOAD_CUR_EXCH_RATE',
+             'процедуру призупинено DOWNLOAD_CUR_EXCH_RATE сталася помилка',
+             'BAD',
+             SYSDATE);
       END;
     
     END LOOP;
+  
+    -- 6.
+    INSERT INTO UTIL.SYS_LOG
+      (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
+    VALUES
+      ((SELECT NVL(MAX(ID), 0) + 1 FROM UTIL.SYS_LOG),
+       'DOWNLOAD_CUR_EXCH_RATE',
+       'Процедуру DOWNLOAD_CUR_EXCH_RATE завершено',
+       'OK',
+       SYSDATE);
+  
+    COMMIT;
   
   END DOWNLOAD_CUR_EXCH_RATE;
 
