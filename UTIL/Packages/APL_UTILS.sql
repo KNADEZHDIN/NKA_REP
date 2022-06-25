@@ -1,15 +1,16 @@
 CREATE OR REPLACE PACKAGE APL_UTILS AS
 
-  -- Процедура для обогащения полей curr_type и json_value в таблице util.cur_exch_rate из API NBU (SM-110/SM-111)
+  -- Процедура збагачення полей curr_type и json_value у таблиці util.cur_exch_rate из API NBU (SM-110/SM-111)
   PROCEDURE DOWNLOAD_CUR_EXCH_RATE;
-  
-  -- Процедура для обогащения всех полей таблицы util.cur_exch_rate и util.cur_exch_rate_history из вью util.cur_exch_rate_v (SM-112/SM-113)
+
+  -- Процедура збагачення всіх полей таблиці util.cur_exch_rate и util.cur_exch_rate_history із вью util.cur_exch_rate_v (SM-112/SM-113)
   PROCEDURE ACTION_CUR_EXCH_RATE;
-  
-  -- Процедура для обогащения всех полей таблицы util.cur_exch_rate и util.cur_exch_rate_history по криптовалюте из Linux сервера (SM-114)
+
+  -- Процедура збагачення усіх полей таблиці util.cur_exch_rate и util.cur_exch_rate_history за криптовалютою із Linux сервера (SM-114)
   PROCEDURE LOAD_ACTION_CUR_FROM_FILE;
 
 END APL_UTILS;
+
 /
 
 CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
