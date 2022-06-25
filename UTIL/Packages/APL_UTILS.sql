@@ -126,10 +126,11 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
        'Процедуру ACTION_CUR_EXCH_RATE запущено',
        'WARNING',
        SYSDATE);
-  
+       
+   -- 2. оновити данні у актуальній таблиці валют CUR_EXCH_RATE із вью СUR_EXCH_RATE_V
+   
     BEGIN
-      -- 2. оновити данні у актуальній таблиці валют CUR_EXCH_RATE із вью СUR_EXCH_RATE_V
-	  
+     	  
 	  MERGE INTO UTIL.CUR_EXCH_RATE CR
       USING (SELECT CE.ID,
                     CE.R030,
@@ -203,17 +204,34 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
        'Процедуру ACTION_CUR_EXCH_RATE завершено',
        'OK',
        SYSDATE);
+       
     -- 6. зафіксувати DML операцію
     COMMIT;
   
   END ACTION_CUR_EXCH_RATE;
   -- Процедура для обогащения всех полей таблицы util.cur_exch_rate и util.cur_exch_rate_history по криптовалюте из Linux сервера (SM-114)
+PROCEDURE LOAD_ACTION_CUR_FROM_FILE IS
   
-  PROCEDURE LOAD_ACTION_CUR_FROM_FILE IS
+   BEGIN
   
-  BEGIN
-  
-    -- 3.
+    -- 1. зафіксувати старт запуску процедури до таблиці логов
+	
+    INSERT INTO UTIL.SYS_LOG
+      (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
+    VALUES
+      ((SELECT NVL(MAX(ID), 0) + 1 FROM UTIL.SYS_LOG),
+       'LOAD_ACTION_CUR_FROM_FILE',
+       'Процедуру LOAD_ACTION_CUR_FROM_FILE запущено',
+       'WARNING',
+       SYSDATE);
+       
+  -- 2. видалення значення CURR_TYPE з таблиці CUR_EXCH_RATE з типом 'CRYPTO'
+	
+    DELETE FROM UTIL.CUR_EXCH_RATE
+     WHERE CURR_TYPE = 'CRYPTO';
+     
+    -- 3. рахувати дані по курсу кріптовалют з файлу на Linux сервері
+    
     FOR CC IN (SELECT TT.R030,
                       TT.TXT,
                       TT.RATE,
@@ -235,9 +253,11 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
                     ) TT) LOOP
       
       BEGIN
+      
         V_ID := GET_MAX_ID;
       
-        -- 4.
+        -- 4.записати данні до актуальної таблиці CUR_EXCH_RATE з циклу 
+        
         INSERT INTO UTIL.CUR_EXCH_RATE
           (ID,
            CURR_ID,
@@ -259,7 +279,8 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
       
         V_ID := GET_MAX_HIST_ID;
       
-        -- 5.
+        -- 5. додати данні до історичної таблиці CUR_EXCH_RATE_HISTOR із циклу 
+        
         INSERT INTO UTIL.CUR_EXCH_RATE_HISTORY
           (ID, CURR_ID, CURR_TEXT, RATE, CURR_CODE, CURR_TYPE, EXCHANGEDATE)
         VALUES
@@ -270,13 +291,37 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
            CC.CUR,
            CC.CURR_TYPE,
            CC.EXCHANGEDATE);
-         
-      EXCEPTION
-        WHEN OTHERS THEN
-          NULL; -- 6. TODO
-      END;
-    
+	   
+         -- 6. якщо сталася будь-яка помилка зафіксувати її у таблиці логов 
+	
+    EXCEPTION
+      WHEN OTHERS THEN
+        INSERT INTO UTIL.SYS_LOG 
+          (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
+        VALUES
+          ((SELECT NVL(MAX(ID), 0) + 1 FROM UTIL.SYS_LOG),
+           'LOAD_ACTION_CUR_FROM_FILE',
+           'процедуру призупинено LOAD_ACTION_CUR_FROM_FILE сталася помилка',
+           'BAD',
+           SYSDATE);
+    END;
+     
     END LOOP;
+    
+      -- 7. зафіксувати завершення процедури у таблиці логов
+	
+    INSERT INTO UTIL.SYS_LOG
+      (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
+    VALUES
+      ((SELECT NVL(MAX(ID), 0) + 1 FROM UTIL.SYS_LOG),
+       'LOAD_ACTION_CUR_FROM_FILE',
+       'Процедуру LOAD_ACTION_CUR_FROM_FILE завершено',
+       'OK',
+       SYSDATE);
+       
+    -- 8. зафіксувати DML операцію
+    
+    COMMIT;
   
   END LOAD_ACTION_CUR_FROM_FILE;
 
