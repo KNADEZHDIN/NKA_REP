@@ -35,11 +35,13 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
   END GET_MAX_HIST_ID;
 
   -- Процедура для обогащения полей curr_type и json_value в таблице util.cur_exch_rate из API NBU (SM-110/SM-111)
-  PROCEDURE DOWNLOAD_CUR_EXCH_RATE IS
+  
+ PROCEDURE DOWNLOAD_CUR_EXCH_RATE IS
   
   BEGIN
   
-    -- 1.
+    -- 1. зафіксувати старт запуску процедури до таблиці логов
+	
     INSERT INTO UTIL.SYS_LOG
       (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
     VALUES
@@ -49,11 +51,13 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
        'WARNING',
        SYSDATE);
   
-    -- 2.
+    -- 2. видалення значення CURR_TYPE з таблиці CUR_EXCH_RATE з типом PRE_METAL', 'MONEY'
+	
     DELETE FROM UTIL.CUR_EXCH_RATE
      WHERE CURR_TYPE IN ('PRE_METAL', 'MONEY');
   
-    -- 3.
+    -- 3. вибір з циклу курс валют з типом PRE_METAL', 'MONEY'
+	
     FOR CC IN (SELECT CT.CURR_CODE
                  FROM UTIL.CURR_TYPE CT
                 WHERE CT.CURR_TYPE IN ('MONEY', 'PRE_METAL')) LOOP
@@ -61,7 +65,8 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
       BEGIN
         V_ID := GET_MAX_ID;
       
-        -- 4.
+        -- 4. записати JSON відповідь з циклу до таблиці CUR_EXCH_RATE в поле JSON_VALUE, а поле CURR_TYPE поле CURR_TYPE з циклу 
+
         INSERT INTO UTIL.CUR_EXCH_RATE
           (ID, CURR_TYPE, JSON_VALUE)
           SELECT V_ID,
@@ -74,9 +79,11 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
                  J.JSON
             FROM (SELECT SYS.GET_CURR_NBU(CC.CURR_CODE) AS JSON FROM DUAL) J;
       
+      -- 5. якщо сталася будь-яка помилка зафіксувати її у таблиці логов 
+    
       EXCEPTION
         WHEN OTHERS THEN
-          INSERT INTO UTIL.SYS_LOG -- 5.
+          INSERT INTO UTIL.SYS_LOG 
             (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
           VALUES
             ((SELECT NVL(MAX(ID), 0) + 1 FROM UTIL.SYS_LOG),
@@ -88,7 +95,8 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
     
     END LOOP;
   
-    -- 6.
+    -- 6. зафіксувати завершення процедури у таблиці логов
+  
     INSERT INTO UTIL.SYS_LOG
       (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
     VALUES
@@ -97,17 +105,19 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
        'Процедуру DOWNLOAD_CUR_EXCH_RATE завершено',
        'OK',
        SYSDATE);
-  
+    -- 7. зафіксувати DML операцію 
     COMMIT;
   
   END DOWNLOAD_CUR_EXCH_RATE;
 
   -- Процедура для обогащения всех полей таблицы util.cur_exch_rate и util.cur_exch_rate_history из вью util.cur_exch_rate_v (SM-112/SM-113)
-  PROCEDURE ACTION_CUR_EXCH_RATE IS
+  
+ PROCEDURE ACTION_CUR_EXCH_RATE IS
   
   BEGIN
   
-    -- 1.
+    -- 1. зафіксувати старт запуску процедури до таблиці логов
+	
     INSERT INTO UTIL.SYS_LOG
       (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
     VALUES
@@ -118,8 +128,9 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
        SYSDATE);
   
     BEGIN
-      -- 2.
-      MERGE INTO UTIL.CUR_EXCH_RATE CR
+      -- 2. оновити данні у актуальній таблиці валют CUR_EXCH_RATE із вью СUR_EXCH_RATE_V
+	  
+	  MERGE INTO UTIL.CUR_EXCH_RATE CR
       USING (SELECT CE.ID,
                     CE.R030,
                     CE.TXT,
@@ -137,7 +148,8 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
                CR.RATE      = FN.RATE,
                CR.CURR_CODE = FN.CUR;
     
-      -- 3.
+      -- 3. додати данні до історичної таблиці CUR_EXCH_RATE_HISTORY із вью СUR_EXCH_RATE_V
+	  
       FOR CC IN (SELECT CE.CURR_ID,
                         CE.CURR_TEXT,
                         CE.RATE,
@@ -167,10 +179,11 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
            CC.EXCHANGEDATE);
       
       END LOOP;
-    
+    -- 4. якщо сталася будь-яка помилка зафіксувати її у таблиці логов 
+	
     EXCEPTION
       WHEN OTHERS THEN
-        INSERT INTO UTIL.SYS_LOG -- 4.
+        INSERT INTO UTIL.SYS_LOG 
           (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
         VALUES
           ((SELECT NVL(MAX(ID), 0) + 1 FROM UTIL.SYS_LOG),
@@ -180,7 +193,8 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
            SYSDATE);
     END;
   
-    -- 5.
+    -- 5. афіксувати завершення процедури у таблиці логов
+	
     INSERT INTO UTIL.SYS_LOG
       (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
     VALUES
@@ -189,12 +203,12 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
        'Процедуру ACTION_CUR_EXCH_RATE завершено',
        'OK',
        SYSDATE);
-  
+    -- 6. зафіксувати DML операцію
     COMMIT;
   
   END ACTION_CUR_EXCH_RATE;
-
   -- Процедура для обогащения всех полей таблицы util.cur_exch_rate и util.cur_exch_rate_history по криптовалюте из Linux сервера (SM-114)
+  
   PROCEDURE LOAD_ACTION_CUR_FROM_FILE IS
   
   BEGIN
