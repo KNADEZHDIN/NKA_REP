@@ -6,18 +6,17 @@ CREATE OR REPLACE PACKAGE APL_UTILS AS
   -- Процедура збагачення всіх полей таблиці util.cur_exch_rate и util.cur_exch_rate_history із вью util.cur_exch_rate_v (SM-112/SM-113)
   PROCEDURE ACTION_CUR_EXCH_RATE;
 
-  -- Процедура збагачення усіх полей таблиці util.cur_exch_rate и util.cur_exch_rate_history за криптовалютою із Linux сервера (SM-114)
+  -- Процедура збагачення усіх полей таблиці util.cur_exch_rate и util.cur_exch_rate_history за криптовалютою із Linux серверу (SM-114)
   PROCEDURE LOAD_ACTION_CUR_FROM_FILE;
 
 END APL_UTILS;
-
 /
 
 CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
 
   V_ID NUMBER := 0;
 
-  -- Внутреняя функция, которая определяет значения для идентификатора по полю util.cur_exch_rate.id
+  -- Внутрішня функція, яка визначає значення для ідентифікатора поля util.cur_exch_rate.id
   FUNCTION GET_MAX_ID RETURN NUMBER IS
     V_MAX_ID NUMBER;
   BEGIN
@@ -25,7 +24,7 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
     RETURN V_MAX_ID;
   END GET_MAX_ID;
 
-  -- Внутреняя функция, которая определяет значения для идентификатора по полю util.cur_exch_rate.id
+  -- Внутрішня функція, яка визначає значення для ідентифікатора поля util.cur_exch_rate.id
   FUNCTION GET_MAX_HIST_ID RETURN NUMBER IS
     V_MAX_ID NUMBER;
   BEGIN
@@ -35,14 +34,13 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
     RETURN V_MAX_ID;
   END GET_MAX_HIST_ID;
 
-  -- Процедура для обогащения полей curr_type и json_value в таблице util.cur_exch_rate из API NBU (SM-110/SM-111)
-  
- PROCEDURE DOWNLOAD_CUR_EXCH_RATE IS
+  -- Процедура збагачення полей  curr_type и json_value у таблиці util.cur_exch_rate із API NBU (SM-110/SM-111)
+  PROCEDURE DOWNLOAD_CUR_EXCH_RATE IS
   
   BEGIN
-  
-    -- 1. зафіксувати старт запуску процедури до таблиці логов
-	
+    
+   -- 1. зафіксувати старт запуску процедури до таблиці логов
+     
     INSERT INTO UTIL.SYS_LOG
       (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
     VALUES
@@ -52,13 +50,13 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
        'WARNING',
        SYSDATE);
   
-    -- 2. видалення значення CURR_TYPE з таблиці CUR_EXCH_RATE з типом PRE_METAL', 'MONEY'
-	
+    -- 2. видалення значення CURR_TYPE з таблиці CUR_EXCH_RATE з типом 'PRE_METAL', 'MONEY'
+  
     DELETE FROM UTIL.CUR_EXCH_RATE
      WHERE CURR_TYPE IN ('PRE_METAL', 'MONEY');
   
     -- 3. вибір з циклу курс валют з типом PRE_METAL', 'MONEY'
-	
+  
     FOR CC IN (SELECT CT.CURR_CODE
                  FROM UTIL.CURR_TYPE CT
                 WHERE CT.CURR_TYPE IN ('MONEY', 'PRE_METAL')) LOOP
@@ -111,9 +109,8 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
   
   END DOWNLOAD_CUR_EXCH_RATE;
 
-  -- Процедура для обогащения всех полей таблицы util.cur_exch_rate и util.cur_exch_rate_history из вью util.cur_exch_rate_v (SM-112/SM-113)
-  
- PROCEDURE ACTION_CUR_EXCH_RATE IS
+  -- Процедура збагачення усіх полей таблиці util.cur_exch_rate и util.cur_exch_rate_history із вью util.cur_exch_rate_v (SM-112/SM-113)
+  PROCEDURE ACTION_CUR_EXCH_RATE IS
   
   BEGIN
   
@@ -127,11 +124,11 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
        'Процедуру ACTION_CUR_EXCH_RATE запущено',
        'WARNING',
        SYSDATE);
-       
-   -- 2. оновити данні у актуальній таблиці валют CUR_EXCH_RATE із вью СUR_EXCH_RATE_V
-   
+  
     BEGIN
-     	  
+      
+      -- 2. оновити данні у актуальній таблиці валют CUR_EXCH_RATE із вью СUR_EXCH_RATE_V
+	  
 	  MERGE INTO UTIL.CUR_EXCH_RATE CR
       USING (SELECT CE.ID,
                     CE.R030,
@@ -195,7 +192,7 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
            SYSDATE);
     END;
   
-    -- 5. афіксувати завершення процедури у таблиці логов
+    -- 5. зафіксувати завершення процедури у таблиці логов
 	
     INSERT INTO UTIL.SYS_LOG
       (ID, APPL_PROC, MESSAGE, STATUS, LOG_DATE)
@@ -205,13 +202,14 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
        'Процедуру ACTION_CUR_EXCH_RATE завершено',
        'OK',
        SYSDATE);
-       
     -- 6. зафіксувати DML операцію
     COMMIT;
   
   END ACTION_CUR_EXCH_RATE;
-  -- Процедура для обогащения всех полей таблицы util.cur_exch_rate и util.cur_exch_rate_history по криптовалюте из Linux сервера (SM-114)
-PROCEDURE LOAD_ACTION_CUR_FROM_FILE IS
+
+  -- Процедура збагачення усіх полей таблиці util.cur_exch_rate и util.cur_exch_rate_history за криптовалютою із Linux серверу (SM-114)
+  
+  PROCEDURE LOAD_ACTION_CUR_FROM_FILE IS
   
    BEGIN
   
@@ -254,7 +252,7 @@ PROCEDURE LOAD_ACTION_CUR_FROM_FILE IS
                     ) TT) LOOP
       
       BEGIN
-      
+        
         V_ID := GET_MAX_ID;
       
         -- 4.записати данні до актуальної таблиці CUR_EXCH_RATE з циклу 
@@ -292,7 +290,7 @@ PROCEDURE LOAD_ACTION_CUR_FROM_FILE IS
            CC.CUR,
            CC.CURR_TYPE,
            CC.EXCHANGEDATE);
-	   
+           
          -- 6. якщо сталася будь-яка помилка зафіксувати її у таблиці логов 
 	
     EXCEPTION
