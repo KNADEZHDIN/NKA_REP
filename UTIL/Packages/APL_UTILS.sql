@@ -199,8 +199,70 @@ CREATE OR REPLACE PACKAGE BODY APL_UTILS AS
   
   BEGIN
   
-    DBMS_OUTPUT.PUT_LINE('ТЕСТ :-) ' ||
-                         TO_CHAR(SYSDATE, 'DD.MM.YYYY HH24:MI:SS'));
+    -- 3.
+    FOR CC IN (SELECT TT.R030,
+                      TT.TXT,
+                      TT.RATE,
+                      TT.CUR,
+                      'CRYPTO' AS CURR_TYPE,
+                      TO_DATE(TT.EXCHANGEDATE, 'dd.mm.yyyy') AS EXCHANGEDATE,
+                      JSON_VALUE
+                    FROM (SELECT SYS.READ_FILE(P_LOCATION => 'CRYPTO_CURR', P_FILENAME => 'crypto.json') JSON_VALUE FROM DUAL) CC, JSON_TABLE
+                    (
+                        JSON_VALUE, '$[*]'
+                          COLUMNS 
+                          (
+                            R030           NUMBER        PATH '$.r030',
+                            TXT            VARCHAR2(100) PATH '$.txt',
+                            RATE           NUMBER        PATH '$.rate',
+                            CUR            VARCHAR2(100) PATH '$.cc',
+                            EXCHANGEDATE   VARCHAR2(100) PATH '$.exchangedate'
+                          )
+                    ) TT) LOOP
+      
+      BEGIN
+        V_ID := GET_MAX_ID;
+      
+        -- 4.
+        INSERT INTO UTIL.CUR_EXCH_RATE
+          (ID,
+           CURR_ID,
+           CURR_TEXT,
+           RATE,
+           CURR_CODE,
+           CURR_TYPE,
+           EXCHANGEDATE,
+           JSON_VALUE)
+        VALUES
+          (V_ID,
+           CC.R030,
+           CC.TXT,
+           CC.RATE,
+           CC.CUR,
+           CC.CURR_TYPE,
+           CC.EXCHANGEDATE,
+           CC.JSON_VALUE);
+      
+        V_ID := GET_MAX_HIST_ID;
+      
+        -- 5.
+        INSERT INTO UTIL.CUR_EXCH_RATE_HISTORY
+          (ID, CURR_ID, CURR_TEXT, RATE, CURR_CODE, CURR_TYPE, EXCHANGEDATE)
+        VALUES
+          (V_ID,
+           CC.R030,
+           CC.TXT,
+           CC.RATE,
+           CC.CUR,
+           CC.CURR_TYPE,
+           CC.EXCHANGEDATE);
+         
+      EXCEPTION
+        WHEN OTHERS THEN
+          NULL; -- 6. TODO
+      END;
+    
+    END LOOP;
   
   END LOAD_ACTION_CUR_FROM_FILE;
 
