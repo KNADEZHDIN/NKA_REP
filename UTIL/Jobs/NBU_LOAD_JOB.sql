@@ -15,15 +15,14 @@ BEGIN
                                 COMMENTS            => 'запуск процедур кожен день о 6 ранку');
 END;
 /
-
+-- подивитись Job
 SELECT * 
 FROM ALL_SCHEDULER_JOBS T WHERE T.JOB_NAME = 'NBU_LOAD_JOB';
 
+-- примусовий запуск Job
 BEGIN
 
-    DBMS_SCHEDULER.RUN_JOB(JOB_NAME => 'UTIL.NBU_LOAD_JOB', 
-
-                           USE_CURRENT_SESSION => FALSE);
+    DBMS_SCHEDULER.RUN_JOB(JOB_NAME => 'UTIL.NBU_LOAD_JOB', USE_CURRENT_SESSION => FALSE);
 
 END;
 
