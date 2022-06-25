@@ -7,23 +7,25 @@ BEGIN
                                                         UTIL.APL_UTILS.LOAD_ACTION_CUR_FROM_FILE();
                                                         END;',
                                 START_DATE          => TO_DATE('26-06-2022 06:00:00', 'dd-mm-yyyy hh24:mi:ss'),
-                                REPEAT_INTERVAL     => 'FREQ=DAILY; BYHOUR=6',
+                                REPEAT_INTERVAL     => 'Freq=Daily;ByHour=6;ByMinute=00',
                                 END_DATE            => TO_DATE(NULL),
                                 JOB_CLASS           => 'DEFAULT_JOB_CLASS',
                                 ENABLED             => TRUE,
-                                AUTO_DROP           => TRUE,
+                                AUTO_DROP           => FALSE,
                                 COMMENTS            => 'запуск процедур кожен день о 6 ранку');
 END;
 /
--- подивитись Job
+
+/*
 SELECT * 
 FROM ALL_SCHEDULER_JOBS T WHERE T.JOB_NAME = 'NBU_LOAD_JOB';
 
--- примусовий запуск Job
+SELECT * 
+FROM ALL_SCHEDULER_JOB_LOG
+WHERE JOB_NAME = 'NBU_LOAD_JOB'
+ORDER BY LOG_DATE DESC;
+
 BEGIN
-
     DBMS_SCHEDULER.RUN_JOB(JOB_NAME => 'UTIL.NBU_LOAD_JOB', USE_CURRENT_SESSION => FALSE);
-
 END;
-
-/
+*/
