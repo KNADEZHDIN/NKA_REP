@@ -1,28 +1,31 @@
-DECLARE 
-d NUMBER:=1;
+DECLARE
+  D NUMBER := 1;
 BEGIN
 
-      d:=1; -- количество секунд
-      FOR c IN 1..8 loop
-        FOR cc IN ( SELECT t.rowid rid, t.DATE_BILL dt, t.NUM_B, round(t.DUR_SEC) DUR_SEC 
-					FROM A_UKRTEL_OUT t 
-					WHERE out01 IS NULL ) loop
-          FOR ci IN ( SELECT t.rowid rid, t.* 
-                       FROM A_OPER_IN t 
-                       WHERE out01 IS NULL
-                       AND NUM_B=cc.NUM_B
-		       --AND RPAD(Num_B, LENGTH(Num_B) - 3)=RPAD(cc.Num_B, LENGTH(cc.Num_B) - 3)
-                       AND ( DATE_BILL BETWEEN cc.dt-d/86400 AND cc.dt+d/86400 )
-                       AND round(DUR_SEC) BETWEEN cc.DUR_SEC-d AND cc.DUR_SEC+d
-                    ORDER BY abs(86400*(DATE_BILL-cc.dt))
-            ) loop
-            UPDATE A_UKRTEL_OUT SET OUT01=d, OUT02=ci.rid WHERE rowid=cc.rid;
-            UPDATE A_OPER_IN SET OUT01=d, OUT02=cc.rid WHERE rowid=ci.rid;
-            commit;
-            exit;
-          END loop;
-        END loop;
-        d:=d*2;
-      END loop;
+  D := 1; -- количество секунд
+  FOR C IN 1 .. 8 LOOP
+    FOR CC IN (SELECT T.ROWID RID, T.DATE_BILL DT, T.NUM_B, ROUND(T.DUR_SEC) DUR_SEC FROM A_UKRTEL_OUT T WHERE OUT01 IS NULL) LOOP
+      FOR CI IN (SELECT T.ROWID RID, T.*
+                   FROM A_OPER_IN T
+                  WHERE OUT01 IS NULL
+                    AND NUM_B = CC.NUM_B
+                     --AND RPAD(Num_B, LENGTH(Num_B) - 3)=RPAD(cc.Num_B, LENGTH(cc.Num_B) - 3)
+                    AND (DATE_BILL BETWEEN CC.DT - D / 86400 AND CC.DT + D / 86400)
+                    AND ROUND(DUR_SEC) BETWEEN CC.DUR_SEC - D AND CC.DUR_SEC + D
+                  ORDER BY ABS(86400 * (DATE_BILL - CC.DT))) LOOP
+        UPDATE A_UKRTEL_OUT
+           SET OUT01 = D,
+               OUT02 = CI.RID
+         WHERE ROWID = CC.RID;
+        UPDATE A_OPER_IN
+           SET OUT01 = D,
+               OUT02 = CC.RID
+         WHERE ROWID = CI.RID;
+        COMMIT;
+        EXIT;
+      END LOOP;
+    END LOOP;
+    D := D * 2;
+  END LOOP;
 
 END;
