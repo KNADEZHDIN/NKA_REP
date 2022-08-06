@@ -11,7 +11,7 @@ BEGIN
                        FROM A_OPER_IN t 
                        WHERE out01 IS NULL
                        AND NUM_B=cc.NUM_B
-					   --AND RPAD(Num_B, LENGTH(Num_B) - 3)=RPAD(cc.Num_B, LENGTH(cc.Num_B) - 3)
+		       --AND RPAD(Num_B, LENGTH(Num_B) - 3)=RPAD(cc.Num_B, LENGTH(cc.Num_B) - 3)
                        AND ( DATE_BILL BETWEEN cc.dt-d/86400 AND cc.dt+d/86400 )
                        AND round(DUR_SEC) BETWEEN cc.DUR_SEC-d AND cc.DUR_SEC+d
                     ORDER BY abs(86400*(DATE_BILL-cc.dt))
